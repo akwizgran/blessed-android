@@ -97,6 +97,7 @@ public class BluetoothCentralManager {
     private @NotNull final Map<String, Integer> connectionRetries = new ConcurrentHashMap<>();
     private @NotNull final Map<String, String> pinCodes = new ConcurrentHashMap<>();
     private @NotNull Transport transport = DEFAULT_TRANSPORT;
+    private boolean legacyScanMode = true;
 
     //region Callbacks
 
@@ -346,7 +347,16 @@ public class BluetoothCentralManager {
     private @NotNull ScanSettings getScanSettings(@NotNull final ScanMode scanMode) {
         Objects.requireNonNull(scanMode, "scanMode is null");
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return new ScanSettings.Builder()
+                    .setScanMode(scanMode.value)
+                    .setLegacy(legacyScanMode)
+                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                    .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                    .setReportDelay(0L)
+                    .build();
+        } else  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return new ScanSettings.Builder()
                     .setScanMode(scanMode.value)
                     .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
@@ -389,6 +399,24 @@ public class BluetoothCentralManager {
      */
     public void setTransport(@NotNull final Transport transport) {
         this.transport = Objects.requireNonNull(transport, "not a valid transport");
+    }
+
+    /**
+     * @return True if legacy scan mode will be used.
+     */
+    public boolean getLegacyScanMode() {
+        return legacyScanMode;
+    }
+
+    /**
+     * Set whether legacy scan mode will be used. This has no effect unless the device supports
+     * Bluetooth 5 and is running Android 8 or later.
+     *
+     * @param legacyScanMode True if legacy scan mode will be used
+     */
+    public void setLegacyScanMode(boolean legacyScanMode) {
+        this.legacyScanMode = legacyScanMode;
+        scanSettings = getScanSettings(ScanMode.fromValue(scanSettings.getScanMode()));
     }
 
     private void startScan(@NotNull final List<ScanFilter> filters, @NotNull final ScanSettings scanSettings, @NotNull final ScanCallback scanCallback) {

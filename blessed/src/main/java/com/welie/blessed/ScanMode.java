@@ -1,5 +1,7 @@
 package com.welie.blessed;
 
+import org.jetbrains.annotations.NotNull;
+
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_BALANCED;
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY;
 import static android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_POWER;
@@ -37,4 +39,13 @@ public enum ScanMode {
     }
 
     public final int value;
+
+    @NotNull
+    public static ScanMode fromValue(int value) {
+        for (ScanMode mode : values()) {
+            if (mode.value == value)
+                return mode;
+        }
+        throw new IllegalArgumentException();
+    }
 }
